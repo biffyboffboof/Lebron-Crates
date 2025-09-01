@@ -17,7 +17,7 @@ import { startTowerOfBotsGame, startTowerOfBotsGameWithShortcut, leaveTower, con
 import { lebronJamesImage } from './src/image';
 
 /**
- * Downloads the current game state as a text file.
+ * Downloads the current game state as a text file. test
  */
 function downloadSaveFile() {
     // Generate a new unique ID for this specific save file
