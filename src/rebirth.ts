@@ -317,7 +317,6 @@ export function handleFinishRebirth() {
     state.tcExchangeRate = 5.0;
     state.shortCollateral = {};
     state.tradeHistory = [];
-    state.loan = null;
     initializeMarket();
 
     // Reset Tower of Bots

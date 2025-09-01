@@ -172,12 +172,6 @@ export interface TowerOfBotsState {
     lossPending: boolean;
 }
 
-export interface Loan {
-    amount: number;
-    collateral: Record<string, MarketPortfolioItem>;
-    dueDate: number;
-}
-
 export interface AppState {
     coins: number;
     inventory: Record<string, number>;
@@ -227,8 +221,7 @@ export interface AppState {
     towerOfBotsMaxPlays: number;
     towerOfBotsNextPlayTimer: number;
     marketSelectedAssetId: string | null;
-    marketActiveTab: 'trading' | 'history' | 'exchange' | 'loan';
+    marketActiveTab: 'trading' | 'history' | 'exchange';
     marketActiveTimeScale: number;
     lastOnline: number;
-    loan: Loan | null;
 }

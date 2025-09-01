@@ -11,7 +11,7 @@ import { handlePlayerAttack, handlePlayerShield, handlePlayerRun, handleBrawlClo
 import { getElement, showConfirmationModal, calculateNetWorth } from './src/utils';
 import './style.css'
 import { CrateType, CraftingSubView, InventorySubView, ConsumableSubView, CrateView, MarketPortfolioItem } from './src/types';
-import { initializeMarket, updateMarketPrices, buyAsset, sellAsset, shortAsset, convertCurrency, checkLoanStatus, takeLoan, repayLoan } from './src/market';
+import { initializeMarket, updateMarketPrices, buyAsset, sellAsset, shortAsset, convertCurrency } from './src/market';
 import { itemData, potions, UPGRADE_DEFINITIONS } from './src/data';
 import { startTowerOfBotsGame, startTowerOfBotsGameWithShortcut, leaveTower, continueTowerAfterLoss, pickCard } from './src/fatesTower';
 import { lebronJamesImage } from './src/image';
@@ -149,7 +149,6 @@ function handleFileUpload(event: Event) {
             state.towerOfBotsNextPlayTimer = loadedSave.towerOfBotsNextPlayTimer ?? 1800;
             state.lastOnline = loadedSave.lastOnline ?? 0;
             state.rebirthShopOffers = loadedSave.rebirthShopOffers ?? null;
-            state.loan = loadedSave.loan ?? null;
 
             // Merged objects
             state.crateCount = { ...defaultCrateCount, ...(loadedSave.crateCount ?? {}) };
@@ -268,9 +267,6 @@ function init() {
         // Brawl cooldown timers
         updateBrawlStatus();
         
-        // Market Loan Timer & Margin Call Check
-        checkLoanStatus();
-
         if (needsUIUpdate) {
             updateAllUI();
         } else if (Object.keys(state.activePotions).length > 0) {
@@ -548,15 +544,6 @@ function init() {
         convertCurrency('fromTC', parseFloat(input.value));
         input.value = '';
     };
-    getElement('repay-loan-btn').onclick = repayLoan;
-    getElement('loan-offers-container').addEventListener('click', (e) => {
-        const target = e.target as HTMLButtonElement;
-        const button = target.closest('button');
-        if (button && button.dataset.loanAmount) {
-            const amount = parseFloat(button.dataset.loanAmount);
-            takeLoan(amount);
-        }
-    });
 
     // Willy Vote Modal
     getElement('willy-vote-yes-btn').onclick = () => {

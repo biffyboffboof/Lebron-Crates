@@ -838,13 +838,6 @@ export const UPGRADE_DEFINITIONS = {
   },
 };
 
-// FIX: Moved LOAN_OFFERS here to be a central data constant
-export const LOAN_OFFERS = [
-    { id: 'small', name: 'Small Loan', amount: 50, collateralMultiplier: 1.25 },
-    { id: 'medium', name: 'Medium Loan', amount: 250, collateralMultiplier: 1.22 },
-    { id: 'large', name: 'Large Loan', amount: 1000, collateralMultiplier: 1.20 },
-];
-
 // --- Getter Functions ---
 
 export function getItemRarity(itemName: string): Rarity | null {

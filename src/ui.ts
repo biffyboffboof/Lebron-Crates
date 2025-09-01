@@ -1,5 +1,5 @@
 import { state } from './state';
-import { getItemSellValue, getPotionSellValue, getItemRarity, getItemCategory, getPotionData, potions, itemEmojis, UPGRADE_DEFINITIONS, ROMAN_NUMERALS, crateShopValues, BRAWL_BARS, itemData, BRAWL_ITEM_EFFECTS, crateEmojis, LOAN_OFFERS } from './data';
+import { getItemSellValue, getPotionSellValue, getItemRarity, getItemCategory, getPotionData, potions, itemEmojis, UPGRADE_DEFINITIONS, ROMAN_NUMERALS, crateShopValues, BRAWL_BARS, itemData, BRAWL_ITEM_EFFECTS, crateEmojis } from './data';
 import { getElement, calculateNetWorth, showConfirmationModal } from './utils';
 import { updateCraftingUI, checkPotionCraftingUnlock, craftItem, setSelectedRecipeId } from './crafting';
 import { sellItem, sellPotion, usePotion, equipWeapon, equipArmor } from './inventory';
@@ -9,7 +9,6 @@ import { initiateBrawl, useBrawlItem, useBrawlPotion } from './brawl';
 // FIX: Added MainView and CraftingSubView to imports
 import { CrateType, InventorySubView, Rarity, CrateView, ConsumableSubView, ItemCategory, TowerReward, BrawlRarity, MainView, CraftingSubView } from './types';
 import { pickCard, leaveTower, continueTowerAfterLoss } from './fatesTower';
-import { takeLoan } from './market';
 
 const CONTINUE_COSTS = [50, 200, 1000];
 const CONVERSION_TAX = 0.02; // Base tax, can be reduced by upgrades
@@ -805,7 +804,6 @@ export function updateMarketUI() {
         trading: getElement('market-trading-view'),
         history: getElement('market-history-view'),
         exchange: getElement('market-exchange-view'),
-        loan: getElement('market-loan-view'),
     };
 
     // Hide all views and deactivate all tabs
@@ -877,68 +875,6 @@ export function updateMarketUI() {
                 tbody.appendChild(row);
             });
              historyListEl.appendChild(table);
-        }
-    } else if (state.marketActiveTab === 'loan') {
-        const newLoanContainer = getElement('new-loan-view');
-        const activeLoanContainer = getElement('loan-status-view');
-        if (state.loan) {
-            newLoanContainer.classList.add('hidden');
-            activeLoanContainer.classList.remove('hidden');
-            getElement('loan-owed-amount').textContent = (state.loan.amount * 1.05).toFixed(2);
-            const timeLeft = Math.max(0, state.loan.dueDate - Date.now());
-            const hours = Math.floor(timeLeft / (1000 * 60 * 60));
-            const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
-            getElement('loan-due-timer').textContent = `${hours}h ${minutes}m`;
-            
-            const collateralList = getElement('loan-active-collateral-list');
-            collateralList.innerHTML = '';
-            let collateralValue = 0;
-            for (const assetId in state.loan.collateral) {
-                const item = state.loan.collateral[assetId];
-                const asset = state.marketAssets[assetId];
-                collateralValue += item.quantity * asset.currentPrice;
-                const li = document.createElement('div');
-                li.textContent = `${item.quantity}x ${asset.name}`;
-                collateralList.appendChild(li);
-            }
-            getElement('loan-collateral-value').textContent = `${collateralValue.toFixed(2)} TC`;
-
-        } else {
-            newLoanContainer.classList.remove('hidden');
-            activeLoanContainer.classList.add('hidden');
-            const offersContainer = getElement('loan-offers-container');
-            offersContainer.innerHTML = '';
-
-            const portfolioValue = Object.entries(state.marketPortfolio).reduce((acc, [assetId, item]) => {
-                if (item.quantity > 0) { // Only long positions can be collateral
-                    return acc + (item.quantity * state.marketAssets[assetId].currentPrice);
-                }
-                return acc;
-            }, 0);
-
-            let availableLoans = 0;
-            LOAN_OFFERS.forEach(offer => {
-                const requiredCollateral = offer.amount * offer.collateralMultiplier;
-                const canAfford = portfolioValue >= requiredCollateral;
-                
-                const card = document.createElement('div');
-                card.className = 'loan-offer-card';
-                if (!canAfford) {
-                    card.classList.add('disabled');
-                }
-                card.innerHTML = `
-                    <h4>${offer.name}</h4>
-                    <p><strong>${offer.amount} TC</strong></p>
-                    <p>Requires ~${requiredCollateral.toFixed(2)} TC in collateral.</p>
-                    <button data-loan-amount="${offer.amount}" ${canAfford ? '' : 'disabled'}>Take Loan</button>
-                `;
-                offersContainer.appendChild(card);
-                if(canAfford) availableLoans++;
-            });
-
-            if (availableLoans === 0) {
-                offersContainer.innerHTML = '<p class="no-items-text">You do not have enough assets to secure a loan.</p>';
-            }
         }
     } else if (state.marketActiveTab === 'exchange') {
         getElement('exchange-coin-balance').textContent = state.coins.toLocaleString();

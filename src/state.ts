@@ -130,7 +130,6 @@ export const state: AppState = {
     marketActiveTab: 'trading',
     marketActiveTimeScale: 100,
     lastOnline: 0,
-    loan: null,
 };
 
 // Initialize inventory and potions from data files

@@ -1,16 +1,11 @@
 import { state } from './state';
 import { updateMarketUI, updateAllUI, showToast } from './ui';
-import { MarketAsset, Trade, MarketPortfolioItem, Loan } from './types';
+import { MarketAsset, Trade, MarketPortfolioItem } from './types';
 import { showConfirmationModal } from './utils';
-// FIX: Import LOAN_OFFERS from data.ts to prevent circular dependencies
-import { LOAN_OFFERS } from './data';
 
 const MAX_HISTORY = 100; // Store last 100 price points for graph
 const COLLATERAL_RATIO = 1.0; // 100% collateral required for shorts
 const CONVERSION_TAX = 0.02; // 2% tax
-const LOAN_INTEREST_RATE = 0.05; // 5% interest for the period
-const LOAN_DURATION_MS = 3 * 60 * 60 * 1000; // 3 hours
-const MARGIN_CALL_THRESHOLD = 1.2; // 120% collateralization required
 
 const initialAssets: MarketAsset[] = [
     { id: 'labubu_basic', name: 'Basic Labubu', currentPrice: 10, basePrice: 10, priceHistory: [10], momentum: 0 },
@@ -275,129 +270,4 @@ export function shortAsset(assetId: string, quantity: number) {
     recordTrade({ assetId, type: 'short', quantity, price: asset.currentPrice, total: value });
     showToast(`Shorted ${quantity} ${asset.name}`, 'success');
     updateAllUI();
-}
-
-export async function takeLoan(amount: number) {
-    if (state.loan) {
-        showToast("You already have an active loan.", "error");
-        return;
-    }
-
-    const offer = LOAN_OFFERS.find(o => o.amount === amount);
-    if (!offer) {
-        showToast("Invalid loan offer.", "error");
-        return;
-    }
-    
-    const requiredCollateral = offer.amount * offer.collateralMultiplier;
-
-    const confirmation = await showConfirmationModal(
-        'Confirm Loan',
-        `Take out a loan for <strong>${amount} TC</strong>? <br><br>The bank will automatically hold assets valued at ~<strong>${requiredCollateral.toFixed(2)} TC</strong> from your portfolio as collateral.`
-    );
-     if (!confirmation) {
-        showToast('Loan cancelled.', 'info');
-        return;
-    }
-
-    // Automatically select best collateral
-    const collateralSelection: Record<string, MarketPortfolioItem> = {};
-    let collectedCollateralValue = 0;
-    
-    const sortedPortfolio = Object.entries(state.marketPortfolio)
-        .filter(([, item]) => item.quantity > 0) // Only long positions
-        .map(([assetId, item]) => ({ assetId, item, value: item.quantity * state.marketAssets[assetId].currentPrice }))
-        .sort((a, b) => b.value - a.value); // Sort by most valuable first
-        
-    for (const asset of sortedPortfolio) {
-        if (collectedCollateralValue >= requiredCollateral) break;
-        collateralSelection[asset.assetId] = asset.item;
-        collectedCollateralValue += asset.value;
-    }
-
-    if (collectedCollateralValue < requiredCollateral) {
-         showToast('Collateral selection failed. Not enough assets.', 'error');
-         return;
-    }
-
-    // Move items from portfolio to collateral
-    for (const assetId in collateralSelection) {
-        delete state.marketPortfolio[assetId];
-    }
-
-    state.tradingCash += amount;
-    state.loan = {
-        amount: amount,
-        collateral: collateralSelection,
-        dueDate: Date.now() + LOAN_DURATION_MS,
-    };
-
-    showToast(`Loan of ${amount} TC received!`, 'success');
-    updateAllUI();
-}
-
-export async function repayLoan() {
-    if (!state.loan) {
-        showToast("You have no loan to repay.", 'info');
-        return;
-    }
-    
-    const amountDue = state.loan.amount * (1 + LOAN_INTEREST_RATE);
-    
-    if (state.tradingCash < amountDue) {
-        showToast(`You need ${amountDue.toFixed(2)} TC to repay your loan. You only have ${state.tradingCash.toFixed(2)} TC.`, 'error');
-        return;
-    }
-    
-     const confirmation = await showConfirmationModal(
-        'Repay Loan',
-        `Repay your loan for <strong>${amountDue.toFixed(2)} TC</strong>? Your collateral will be returned.`
-    );
-    if (!confirmation) {
-        showToast('Repayment cancelled.', 'info');
-        return;
-    }
-
-    state.tradingCash -= amountDue;
-    
-    // Return collateral to portfolio
-    for (const assetId in state.loan.collateral) {
-        state.marketPortfolio[assetId] = state.loan.collateral[assetId];
-    }
-    
-    state.loan = null;
-
-    showToast('Loan repaid successfully!', 'success');
-    updateAllUI();
-}
-
-export function checkLoanStatus() {
-    if (!state.loan) return;
-    
-    const now = Date.now();
-    let collateralValue = 0;
-    for (const assetId in state.loan.collateral) {
-        if (state.marketAssets[assetId]) {
-            collateralValue += state.loan.collateral[assetId].quantity * state.marketAssets[assetId].currentPrice;
-        }
-    }
-
-    const amountOwed = state.loan.amount;
-
-    // Margin Call Check
-    if (collateralValue < amountOwed * MARGIN_CALL_THRESHOLD) {
-        showToast(`MARGIN CALL! Your collateral value dropped too low. Liquidating assets to cover your ${amountOwed.toFixed(2)} TC loan.`, 'error');
-        state.loan = null;
-        // You don't get the money back, the bank takes it. The penalty is the loss of assets.
-        updateAllUI();
-        return;
-    }
-
-    // Overdue Check
-    if (now > state.loan.dueDate) {
-        showToast(`LOAN OVERDUE! Your collateral is being liquidated to cover your ${amountOwed.toFixed(2)} TC loan.`, 'error');
-        state.loan = null;
-        updateAllUI();
-        return;
-    }
 }

@@ -187,7 +187,6 @@ export function saveGame() {
     localStorage.setItem("towerOfBotsState", JSON.stringify(state.towerOfBotsState));
     localStorage.setItem("towerOfBotsPlays", state.towerOfBotsPlays.toString());
     localStorage.setItem("towerOfBotsNextPlayTimer", state.towerOfBotsNextPlayTimer.toString());
-    localStorage.setItem("loan", JSON.stringify(state.loan));
 }
 
 export function loadGame() {
@@ -260,7 +259,6 @@ export function loadGame() {
     state.towerOfBotsNextPlayTimer = parseInt(localStorage.getItem("towerOfBotsNextPlayTimer") || '1800', 10);
     state.towerOfBotsMaxPlays = 2; // This is a constant, no need to save/load
     state.lastOnline = parseInt(localStorage.getItem("lastOnline") || '0', 10);
-    state.loan = JSON.parse(localStorage.getItem("loan") || 'null');
 
 
     // Migration for basePrice
@@ -314,4 +312,3 @@ export function loadGame() {
         // Assign an ID if one doesn't exist (new game or old save)
         state.saveId = Date.now() + '-' + Math.random();
     }
-    

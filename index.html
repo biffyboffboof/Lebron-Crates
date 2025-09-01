@@ -492,7 +492,6 @@
     <div class="market-body">
       <div id="market-tabs" class="inventory-toggle-container">
           <button class="toggle-btn" data-tab="trading">Trading</button>
-          <button class="toggle-btn" data-tab="loan">Loan</button>
           <button class="toggle-btn" data-tab="exchange">Exchange</button>
           <button class="toggle-btn" data-tab="history">History</button>
       </div>
@@ -540,28 +539,6 @@
               </div>
             </div>
           </div>
-        </div>
-        <div id="market-loan-view" class="hidden">
-           <div id="loan-status-view" class="hidden">
-              <h4>Active Loan</h4>
-              <div class="loan-status-grid">
-                  <p>Amount Owed:</p><span id="loan-owed-amount"></span>
-                  <p>Due In:</p><span id="loan-due-timer"></span>
-                  <p>Collateral Value:</p><span id="loan-collateral-value"></span>
-                  <p>Liquidation risk:</p><span id="loan-liquidation-warning"></span>
-              </div>
-              <h4>Collateral Held</h4>
-              <div id="loan-active-collateral-list" class="loan-collateral-list"></div>
-              <button id="repay-loan-btn">Repay Loan</button>
-           </div>
-           <div id="new-loan-view">
-              <h4>Take a Loan</h4>
-              <p class="loan-info-text">Select a loan package below. Loans must be repaid within <strong>3 hours</strong>. Failure to repay or maintain collateral value (above 120% of loan value) will result in liquidation of your assets.</p>
-              <div id="loan-offers-container" class="loan-offers-container">
-                <!-- Loan offers will be injected here by JS -->
-                <p class="no-items-text">You have no assets to use as collateral.</p>
-              </div>
-           </div>
         </div>
         <div id="market-exchange-view" class="hidden">
           <div class="market-currency-exchange">
