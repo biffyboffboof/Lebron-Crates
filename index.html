@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LeBron Crates - Reimagined</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <script type="importmap">
+{
+  "imports": {
+    "three": "https://esm.sh/three@0.128.0",
+    "@google/genai": "https://esm.sh/@google/genai@^1.15.0"
+  }
+}
+</script>
+</head>
+<body>
+
+  <div id="title-screen">
+    <h1><span id="title-crate-emoji">🎁</span> LeBron Crates</h1>
+    <p>Reimagined</p>
+    <div class="title-screen-buttons">
+      <button id="start-game-btn">Start Game</button>
+      <label class="button-like-label">
+        Load Save
+        <input type="file" id="upload-save-input-title" accept=".txt" style="display: none;">
+      </label>
+      <button id="credits-btn">Credits</button>
+    </div>
+  </div>
+
+  <div id="toast-container"></div>
+  <div id="tooltip"></div>
+
+  <div id="crate-modal" class="hidden">
+    <div id="animation-container"></div>
+    <div id="result-container" class="hidden">
+      <h2 id="result-rarity"></h2>
+      <div id="result-image-wrapper">
+        <div id="result-emoji"></div>
+      </div>
+      <p id="result-text"></p>
+      <button id="result-close-btn">Continue</button>
+    </div>
+  </div>
+
+  <div id="multi-result-modal" class="hidden">
+    <div class="modal-content">
+      <h2>Multi-Open Results</h2>
+      <div id="multi-result-grid"></div>
+      <button id="multi-result-close-btn">Continue</button>
+    </div>
+  </div>
+
+  <div id="container" class="container hidden">
+    <header>
+      <div class="title-container">
+        <h1>🎁 LeBron Crates</h1>
+        <button id="enterCodeBtn">Enter Code</button>
+        <button id="statsBtn">Stats</button>
+        <button id="saveBtn">Save</button>
+        <button id="restartBtn">Restart</button>
+      </div>
+      <div class="stats">
+        <p>Coins: <span id="coins">0</span> | TC: <span id="trading-cash">0.00</span> | Net Worth: <span id="netWorth">0</span> | Rebirth Tokens: <span id="rebirth-token-balance">0</span></p>
+        <p>Equipped: Weapon: <span id="equipped-weapon">None</span> | Armor: <span id="equipped-armor">None</span></p>
+      </div>
+      <div id="active-effects-container"></div>
+    </header>
+
+    <main>
+      <section id="crates-section" class="crates-section card">
+          <div class="crates-header">
+              <div id="crate-view-nav" class="inventory-toggle-container">
+                  <button id="nav-standard-btn" class="toggle-btn active" data-view="standard">Standard</button>
+                  <button id="nav-weapon-btn" class="toggle-btn" data-view="weapon">Weapons</button>
+                  <button id="nav-armor-btn" class="toggle-btn" data-view="armor">Armor</button>
+                  <button id="nav-potion-btn" class="toggle-btn" data-view="potion">Potions</button>
+              </div>
+          </div>
+          <div id="crates-container">
+            <!-- Standard Crates Page -->
+            <div id="standard-crates-page" class="crate-page">
+                <div class="crate-grid">
+                    <div class="crate-card common">
+                        <div class="crate-card-header">
+                            <h3>Basic Crate</h3>
+                            <div class="crate-info-icon" id="basic-info-btn" data-action="info" data-type="basic">ⓘ</div>
+                            <div class="crate-count" id="basic-crate-count">0</div>
+                        </div>
+                        <p class="crate-desc" id="basic-desc-text">The bread and butter. Mostly common items, but with a chance for better crates.</p>
+                        <div class="crate-card-actions">
+                            <button id="basic-crate-btn" data-action="open" data-type="basic">Open</button>
+                            <button id="basic-open-all-btn" data-action="open-all" data-type="basic">Open All</button>
+                            <button id="basic-buy-btn" data-action="buy" data-type="basic">Buy (5)</button>
+                        </div>
+                    </div>
+                    <div class="crate-card rare">
+                        <div class="crate-card-header">
+                            <h3>Rare Crate</h3>
+                            <div class="crate-info-icon" id="rare-info-btn" data-action="info" data-type="rare">ⓘ</div>
+                            <div class="crate-count" id="rare-crate-count">0</div>
+                        </div>
+                        <p class="crate-desc" id="rare-desc-text">A good chance for rare items and a shot at epic crates.</p>
+                        <div class="crate-card-actions">
+                            <button id="rare-crate-btn" data-action="open" data-type="rare" class="locked">Open</button>
+                            <button id="rare-open-all-btn" data-action="open-all" data-type="rare">Open All</button>
+                            <button id="rare-buy-btn" data-action="buy" data-type="rare">Buy (20)</button>
+                        </div>
+                    </div>
+                    <div class="crate-card epic">
+                        <div class="crate-card-header">
+                            <h3>Epic Crate</h3>
+                            <div class="crate-info-icon" id="epic-info-btn" data-action="info" data-type="epic">ⓘ</div>
+                            <div class="crate-count" id="epic-crate-count">0</div>
+                        </div>
+                        <p class="crate-desc" id="epic-desc-text">Guaranteed epic items or legendary crates.</p>
+                        <div class="crate-card-actions">
+                            <button id="epic-crate-btn" data-action="open" data-type="epic" class="locked">Open</button>
+                            <button id="epic-open-all-btn" data-action="open-all" data-type="epic">Open All</button>
+                            <button id="epic-buy-btn" data-action="buy" data-type="epic">Buy (75)</button>
+                        </div>
+                    </div>
+                    <div class="crate-card legendary">
+                        <div class="crate-card-header">
+                            <h3>Legendary Crate</h3>
+                            <div class="crate-info-icon" id="legendary-info-btn" data-action="info" data-type="legendary">ⓘ</div>
+                            <div class="crate-count" id="legendary-crate-count">0</div>
+                        </div>
+                        <p class="crate-desc" id="legendary-desc-text">Almost always legendary, with a tiny chance for the King himself.</p>
+                        <div class="crate-card-actions">
+                            <button id="legendary-crate-btn" data-action="open" data-type="legendary" class="locked">Open</button>
+                            <button id="legendary-open-all-btn" data-action="open-all" data-type="legendary">Open All</button>
+                            <button id="legendary-buy-btn" data-action="buy" data-type="legendary">Buy (200)</button>
+                        </div>
+                    </div>
+                     <div class="crate-card mythical">
+                        <div class="crate-card-header">
+                            <h3>Mythical Crate</h3>
+                            <div class="crate-info-icon" id="mythical-info-btn" data-action="info" data-type="mythical">ⓘ</div>
+                            <div class="crate-count" id="mythical-crate-count">0</div>
+                        </div>
+                        <p class="crate-desc" id="mythical-desc-text">A guaranteed mythical item, with a slightly better chance for LeBron.</p>
+                        <div class="crate-card-actions">
+                            <button id="mythical-crate-btn" data-action="open" data-type="mythical" class="locked">Open</button>
+                            <button id="mythical-open-all-btn" data-action="open-all" data-type="mythical">Open All</button>
+                            <button id="mythical-buy-btn" data-action="buy" data-type="mythical">Buy (1000)</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Weapon Crates Page -->
+            <div id="weapon-crates-page" class="crate-page hidden">
+                <!-- Weapon crate cards will be dynamically inserted here -->
+            </div>
+            <!-- Armor Crates Page -->
+            <div id="armor-crates-page" class="crate-page hidden">
+                 <!-- Armor crate cards will be dynamically inserted here -->
+            </div>
+            <!-- Potion Crates Page -->
+            <div id="potion-crates-page" class="crate-page hidden">
+                 <!-- Potion crate cards will be dynamically inserted here -->
+            </div>
+          </div>
+      </section>
+      
+      <section class="free-crate-section card">
+          <h2>Free Crates</h2>
+          <div id="freeCrateTimer">Next free crate in: <span id="timer">30</span>s</div>
+          <div id="free-crates-display"></div>
+          <button id="claimFreeBtn">Claim All (<span id="freeCrates">0</span>)</button>
+      </section>
+      
+      <section class="rebirth-section card">
+        <h2>✨ Rebirth</h2>
+        <p id="rebirth-desc">You must own LeBron James to attempt a rebirth. Your Net Worth determines the stakes.</p>
+        <button id="rebirthBtn" class="large-button" disabled>Challenge Tim Cheese (<span id="rebirth-token-preview">0</span>)</button>
+      </section>
+
+      <section class="brawl-section card">
+        <h2>🍻 Drunken Brawl</h2>
+        <p>Test your mettle in a series of fights. Win rewards, but be warned: defeat costs 10% of your coins and some common items.</p>
+        <button id="startBrawlBtn" class="large-button">Fight!</button>
+      </section>
+
+      <section id="tower-of-bots-section" class="tower-of-bots-section card">
+        <h2>🤖 Tower of Bots</h2>
+        <p>An enigmatic structure that hums with latent power. What secrets does it hold?</p>
+        <p id="tower-timer-desc" style="color: var(--text-color-secondary); font-size: 0.9rem;"></p>
+        <div class="tower-entry-buttons">
+          <button id="enter-bots-tower-btn" class="large-button">Enter <span id="tower-plays-count">(1)</span></button>
+          <button id="shortcut-bots-tower-btn" class="large-button shortcut-button">Shortcut to Floor 30 (500 Coins)</button>
+        </div>
+      </section>
+      
+      <section id="market-section" class="market-section card">
+        <h2>📈 Market</h2>
+        <p>A place for commerce and opportunity. More features coming soon!</p>
+        <button id="tradeBtn" class="large-button">Trade</button>
+      </section>
+
+      <section id="gamble-section" class="gamble-section card">
+        <h2>🎲 Multi-Item Gamble</h2>
+        <div id="gamble-area">
+          <p>Selected Items: <span id="selectedCount">0</span> | Total Value: <span id="gamble-value">0</span></p>
+          <p>Gambled Coins: <span id="gambledCoinsCount">0</span></p>
+          <button id="addCoinsBtn">Add Coins to Gamble</button>
+          <div id="selected-gamble-items"></div>
+          <div id="gamble-controls" class="hidden">
+            <p>Double or nothing. Call the coin flip!</p>
+            <div id="gamble-status-indicators">
+                <span id="second-chance-status"></span>
+                <span id="gamble-insurance-status"></span>
+            </div>
+            <button id="headsBtn">Heads</button>
+            <button id="tailsBtn">Tails</button>
+            <button id="restoreBtn">Restore Selection</button>
+          </div>
+          <div id="gambleResult"></div>
+        </div>
+      </section>
+      
+      <section class="inventory-section card">
+        <div class="inventory-header">
+            <div class="inventory-title-container">
+                <h2>📦</h2>
+                <div id="main-view-toggle-container" class="inventory-toggle-container">
+                    <button id="show-inventory-btn" class="toggle-btn active" aria-pressed="true">Inventory</button>
+                    <button id="show-crafting-btn" class="toggle-btn" aria-pressed="false">Crafting</button>
+                </div>
+            </div>
+            <div id="inventory-controls" class="inventory-controls">
+              <div class="dropdown-container">
+                <button id="selectAllBtn">Select All</button>
+                <div id="selectAllDropdown" class="dropdown-content hidden">
+                  <button id="sellAllBtn">Sell All</button>
+                  <button id="gambleAllBtn">Gamble All</button>
+                </div>
+              </div>
+            </div>
+        </div>
+        <div id="inventory-sub-toggle-container" class="inventory-toggle-container">
+            <button id="show-items-btn" class="toggle-btn active" aria-pressed="true">Goods</button>
+            <button id="show-weapons-btn" class="toggle-btn" aria-pressed="false">Weapons</button>
+            <button id="show-armor-btn" class="toggle-btn" aria-pressed="false">Armor</button>
+            <button id="show-ingredients-btn" class="toggle-btn" aria-pressed="false">Ingredients</button>
+            <button id="show-consumables-btn" class="toggle-btn" aria-pressed="false">Consumables</button>
+        </div>
+         <div id="consumable-sub-toggle-container" class="inventory-toggle-container hidden" style="margin-top: 15px;">
+            <button id="show-consumable-potions-btn" class="toggle-btn active" aria-pressed="true">Potions</button>
+            <button id="show-consumable-combatItems-btn" class="toggle-btn" aria-pressed="false">Combat Items</button>
+        </div>
+        <div class="inventory" id="inventory">
+            <!-- This container will be populated by JS with rarity-section divs -->
+        </div>
+        <div class="crafting-ui hidden" id="crafting-ui">
+            <div id="crafting-recipe-list-container" class="crafting-panel">
+                <div id="crafting-sub-toggle-container" class="inventory-toggle-container" style="margin-bottom: 15px;">
+                    <button id="show-crafting-goods-btn" class="toggle-btn active">Goods</button>
+                    <button id="show-crafting-weapons-btn" class="toggle-btn">Weapons</button>
+                    <button id="show-crafting-potions-btn" class="toggle-btn">Potions</button>
+                </div>
+                <div id="crafting-recipe-list"></div>
+            </div>
+            <div id="crafting-recipe-details" class="crafting-panel"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="coin-flip-modal" class="hidden">
+    <div id="coin-flip-animation-container"></div>
+  </div>
+
+  <div id="add-coins-modal" class="hidden">
+    <div class="modal-content">
+      <h2>Add Coins to Gamble</h2>
+      <p>Current Coins: <span id="modal-current-coins">0</span></p>
+      <input type="number" id="gamble-coin-input" placeholder="Enter amount" min="1">
+      <div class="modal-buttons">
+        <button id="confirm-add-coins-btn">Add</button>
+        <button id="cancel-add-coins-btn">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="code-modal" class="hidden">
+    <div class="modal-content">
+      <h2>Enter Code</h2>
+      <input type="text" id="code-input" placeholder="Enter code" autocomplete="off">
+      <div class="modal-buttons">
+        <button id="redeem-code-btn">Redeem</button>
+        <button id="cancel-code-btn">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="credits-modal" class="hidden">
+    <div class="modal-content">
+      <h2>Credits</h2>
+      <div class="credits-content">
+        <h4>Creators</h4>
+        <p>Biffy &amp; CK</p>
+        <h4>Inspirations</h4>
+        <p>Willy, The Gardener, Omega, Low Agency</p>
+      </div>
+      <div class="modal-buttons">
+        <button id="close-credits-btn">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="stats-modal" class="hidden">
+    <div class="modal-content">
+      <h2>Game Statistics</h2>
+      <div class="stats-grid">
+        <p>Lifetime Coins Earned:</p><span id="stat-lifetime-coins">0</span>
+        <p>Peak Net Worth:</p><span id="stat-peak-net-worth">0</span>
+        <p>Rebirths:</p><span id="stat-rebirths">0</span>
+        <p>Crates Opened:</p><span id="stat-crates-opened">0</span>
+        <p>Total Value Gambled:</p><span id="stat-total-gambled">0</span>
+        <p>Total Value Won from Gamble:</p><span id="stat-total-won">0</span>
+        <p>Gamble Win Rate:</p><span id="stat-gamble-win-rate">N/A</span>
+        <p>Market P/L:</p><span id="stat-market-pnl">N/A</span>
+        <p>Crate Luck:</p><span id="stat-crate-luck">N/A</span>
+        <p><strong>Overall Luck Score:</strong></p><span id="stat-overall-luck">N/A</span>
+      </div>
+      <div class="modal-buttons">
+        <button id="close-stats-btn">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="saveload-modal" class="hidden">
+    <div class="modal-content">
+      <h2>Save Progress</h2>
+      <p>Download your progress to a file to keep it safe or transfer it to another device.</p>
+      <div class="modal-buttons">
+        <button id="download-save-btn">Download Save</button>
+        <button id="cancel-saveload-btn">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="crate-info-modal" class="hidden">
+    <div class="modal-content">
+      <h2 id="crate-info-title">Crate Odds</h2>
+      <div id="crate-info-content"></div>
+      <div class="modal-buttons">
+        <button id="crate-info-close-btn">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="blackjack-screen" class="hidden">
+    <div id="blackjack-intro"></div>
+    <div class="blackjack-table">
+      <div class="dealer-area">
+        <h2>Tim Cheese's Hand (<span id="dealer-score">?</span>)</h2>
+        <div id="dealer-hand" class="hand"></div>
+      </div>
+      <div class="game-info">
+          <h1 id="blackjack-status">VS TIM CHEESE</h1>
+          <div id="blackjack-message"></div>
+          <div id="player-actions" class="hidden">
+            <button id="hit-btn">Hit</button>
+            <button id="stand-btn">Stand</button>
+          </div>
+          <div id="blackjack-token-result"></div>
+          <button id="proceed-to-upgrades-btn" class="hidden" style="display: none;">Spend Tokens</button>
+      </div>
+      <div class="player-area">
+        <h2>Your Hand (<span id="player-score">0</span>)</h2>
+        <div id="player-hand" class="hand"></div>
+      </div>
+    </div>
+  </div>
+  
+  <div id="rebirth-upgrades-screen" class="hidden">
+    <div class="rebirth-upgrades-content">
+      <h2 id="rebirth-result-title">Rebirth</h2>
+      <p>You have faced Tim Cheese and emerged anew. Spend your tokens wisely on the upgrades offered.</p>
+      <h3>Rebirth Tokens: <span id="rebirth-tokens-display">0</span></h3>
+      <div id="upgrades-grid" class="upgrades-grid">
+          <!-- Dynamically populated -->
+      </div>
+      <button id="finish-rebirth-btn">Begin Anew</button>
+    </div>
+  </div>
+
+  <div id="brawl-screen" class="hidden">
+    <div class="brawl-container">
+        <div class="brawl-opponent-area">
+            <h2 id="brawl-opponent-name"></h2>
+            <div class="brawl-stats">
+                <span id="brawl-opponent-emoji"></span>
+                <div class="brawl-health-bar-container">
+                    <div id="brawl-opponent-health-bar" class="brawl-health-bar"></div>
+                    <span id="brawl-opponent-health-text" class="brawl-health-text"></span>
+                </div>
+                <div class="brawl-shield-container" id="brawl-opponent-shield-container">
+                    🛡️ <span id="brawl-opponent-shield">0</span>
+                </div>
+            </div>
+            <div id="brawl-opponent-buffs" class="brawl-buffs-container"></div>
+        </div>
+
+        <div id="brawl-log" class="brawl-log"></div>
+
+        <div class="brawl-player-area">
+            <h2>You</h2>
+             <div class="brawl-stats">
+                <span id="brawl-player-emoji">🍺</span>
+                 <div class="brawl-bars-stack">
+                    <div class="brawl-health-bar-container">
+                        <div id="brawl-player-health-bar" class="brawl-health-bar"></div>
+                        <span id="brawl-player-health-text" class="brawl-health-text"></span>
+                    </div>
+                    <div class="brawl-stamina-bar-container">
+                        <div id="brawl-player-stamina-bar" class="brawl-stamina-bar"></div>
+                        <span id="brawl-player-stamina-text" class="brawl-health-text"></span>
+                    </div>
+                </div>
+                <div class="brawl-shield-container">
+                    🛡️ <span id="brawl-player-shield">0</span>
+                </div>
+            </div>
+            <div id="brawl-player-buffs" class="brawl-buffs-container"></div>
+        </div>
+
+        <div id="brawl-actions" class="brawl-actions">
+            <button id="brawl-attack-btn">Attack</button>
+            <button id="brawl-shield-btn">Shield</button>
+            <button id="brawl-item-btn">Item</button>
+            <button id="brawl-potion-btn">Potion</button>
+            <button id="brawl-run-btn">Run</button>
+        </div>
+        
+        <div id="brawl-end-screen" class="hidden">
+            <h2 id="brawl-end-title"></h2>
+            <div id="brawl-rewards-summary"></div>
+            <p id="brawl-penalty-summary"></p>
+            <button id="brawl-close-btn">Continue</button>
+        </div>
+    </div>
+</div>
+
+<div id="brawl-selection-modal" class="hidden">
+  <div class="modal-content">
+    <h2>Choose a Bar</h2>
+    <div id="brawl-bars-list">
+      <!-- Dynamically populated -->
+    </div>
+    <div class="modal-buttons">
+      <button id="cancel-brawl-selection-btn">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div id="brawl-item-modal" class="hidden">
+  <div class="modal-content">
+    <h2 id="brawl-item-modal-title">Use Item</h2>
+    <div id="brawl-item-grid" class="brawl-item-list">
+      <!-- Dynamically populated -->
+    </div>
+    <div class="modal-buttons">
+      <button id="cancel-brawl-item-btn">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div id="willy-vote-modal" class="hidden">
+  <div class="modal-content">
+    <h2>A Question of Allegiance</h2>
+    <p>Are you voting for Willy?</p>
+    <div class="modal-buttons">
+      <button id="willy-vote-yes-btn">Yes</button>
+      <button id="willy-vote-no-btn">No</button>
+    </div>
+  </div>
+</div>
+
+<div id="market-modal" class="hidden">
+  <div class="modal-content">
+    <div class="market-header">
+      <h2>📈 Labubu Market</h2>
+      <button id="market-close-btn" class="modal-close-btn">×</button>
+    </div>
+    <div class="market-body">
+      <div id="market-tabs" class="inventory-toggle-container">
+          <button class="toggle-btn" data-tab="trading">Trading</button>
+          <button class="toggle-btn" data-tab="loan">Loan</button>
+          <button class="toggle-btn" data-tab="exchange">Exchange</button>
+          <button class="toggle-btn" data-tab="history">History</button>
+      </div>
+      <div class="market-content">
+        <div id="market-trading-view" class="hidden">
+          <div class="market-asset-list-section">
+            <h4>Assets</h4>
+            <div id="market-asset-list">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+          <div class="market-main-content">
+            <div class="market-graph-section">
+              <div class="market-graph-header">
+                  <h3 id="market-asset-name"></h3>
+                  <div id="market-graph-timescale" class="inventory-toggle-container">
+                      <button class="toggle-btn" data-scale="20">1m</button>
+                      <button class="toggle-btn active" data-scale="100">5m</button>
+                  </div>
+              </div>
+              <canvas id="market-graph-canvas"></canvas>
+            </div>
+          </div>
+          <div class="market-side-panel">
+            <div class="market-balance-display">
+              <h4>Balance</h4>
+              <p><span id="market-tc-balance">0.00</span> TC</p>
+            </div>
+            <div class="market-trading-actions">
+              <h4>Trading</h4>
+              <div id="market-info">
+                <p>Current Price: <span id="market-current-price"></span></p>
+                <p>You Own: <span id="market-user-holding"></span></p>
+                <p>Average Entry Price: <span id="market-avg-entry"></span></p>
+                <p>Position Value: <span id="market-position-value"></span></p>
+                <p>Unrealized P/L: <span id="market-unrealized-pnl"></span></p>
+              </div>
+              <div class="market-controls">
+                <input type="number" id="market-quantity-input" placeholder="Qty" min="1" value="1">
+                <div class="market-buttons">
+                  <button id="market-buy-btn">Buy</button>
+                  <button id="market-sell-btn">Sell</button>
+                  <button id="market-short-btn">Short</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id="market-loan-view" class="hidden">
+           <div id="loan-status-view" class="hidden">
+              <h4>Active Loan</h4>
+              <div class="loan-status-grid">
+                  <p>Amount Owed:</p><span id="loan-owed-amount"></span>
+                  <p>Due In:</p><span id="loan-due-timer"></span>
+                  <p>Collateral Value:</p><span id="loan-collateral-value"></span>
+                  <p>Liquidation risk:</p><span id="loan-liquidation-warning"></span>
+              </div>
+              <h4>Collateral Held</h4>
+              <div id="loan-active-collateral-list" class="loan-collateral-list"></div>
+              <button id="repay-loan-btn">Repay Loan</button>
+           </div>
+           <div id="new-loan-view">
+              <h4>Take a Loan</h4>
+              <p class="loan-info-text">Select a loan package below. Loans must be repaid within <strong>3 hours</strong>. Failure to repay or maintain collateral value (above 120% of loan value) will result in liquidation of your assets.</p>
+              <div id="loan-offers-container" class="loan-offers-container">
+                <!-- Loan offers will be injected here by JS -->
+                <p class="no-items-text">You have no assets to use as collateral.</p>
+              </div>
+           </div>
+        </div>
+        <div id="market-exchange-view" class="hidden">
+          <div class="market-currency-exchange">
+            <h4>Currency Exchange</h4>
+            <div class="exchange-rate-info">
+              <p>Rate: 1 TC ≈ <span id="exchange-rate">5.00</span> Coins</p>
+              <p>Tax: <span id="exchange-tax">2</span>%</p>
+            </div>
+            <div class="exchange-balances">
+                <p>Coins: <span id="exchange-coin-balance"></span></p>
+                <p>TC: <span id="exchange-tc-balance"></span></p>
+            </div>
+            <div class="exchange-controls">
+                <input type="number" id="market-exchange-input" placeholder="Amount" min="1">
+                <div class="exchange-buttons">
+                    <button id="market-to-tc-btn">Coins ► TC</button>
+                    <button id="market-from-tc-btn">TC ► Coins</button>
+                </div>
+            </div>
+          </div>
+        </div>
+        <div id="market-history-view" class="hidden">
+          <h4>Trade History</h4>
+          <div id="market-history-list">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="confirm-modal" class="hidden">
+  <div class="modal-content">
+    <h2 id="confirm-modal-title">Confirm</h2>
+    <p id="confirm-modal-text" style="line-height: 1.5; max-width: 400px;"></p>
+    <div class="modal-buttons">
+      <button id="confirm-modal-yes-btn">Confirm</button>
+      <button id="confirm-modal-no-btn" style="background-color: var(--surface-color); color: var(--text-color); border: 1px solid var(--border-color);">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div id="tower-of-bots-screen" class="hidden">
+  <div class="modal-content">
+    <div class="bots-tower-header">
+        <h2>🤖 Tower of Bots</h2>
+        <div class="bots-tower-info">
+            <span>Floor: <span id="tower-floor">1</span></span>
+        </div>
+    </div>
+    <div class="bots-tower-rewards">
+        <h3>Accumulated Rewards</h3>
+        <div id="tower-rewards-list">None</div>
+    </div>
+    <div id="bots-tower-card-area" class="bots-tower-card-area">
+        <!-- 4 cards will be generated here -->
+    </div>
+    <div id="tower-result-text" class="tower-result-text"></div>
+    <div id="tower-actions" class="modal-buttons">
+        <button id="tower-leave-btn">Leave with Rewards</button>
+        <button id="tower-continue-btn" class="hidden">Continue</button>
+        <button id="tower-give-up-btn" class="hidden" style="background-color: var(--surface-color); color: var(--text-color); border: 1px solid var(--border-color);">Give Up</button>
+    </div>
+  </div>
+</div>
+
+<div id="welcome-back-modal" class="hidden">
+  <div class="modal-content">
+    <h2>While you were away...</h2>
+    <div id="welcome-back-summary" class="welcome-back-summary"></div>
+    <div class="modal-buttons">
+      <button id="close-welcome-back-btn">Continue</button>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="index.tsx"></script>
+</body>
+</html>
